@@ -7,18 +7,21 @@ import com.fasterxml.jackson.core.type.TypeReference;
 public class Servidor {
     public static void main(String[] args) throws Exception {
         System.out.println("Hello, World!");
+        while(true){
         try {
             int pto = 8000;
             ServerSocket s = new ServerSocket(pto);
             System.out.println("Servidor iniciado en el puerto "+pto+" .. esperando cliente..");
+            String catalogo=leerJSON();
+            System.out.println(catalogo);
             for(;;){
                 Socket cl = s.accept();
-                System.out.println("Cliente conectado desde "+cl.getInetAddress()+":"+cl.getPort());
+                System.out.println("Cliente conectado desde "+cl.getInetAddress()+":"+cl.getPort()+" Enviando catálogo...");
                 PrintWriter pw = new PrintWriter(new OutputStreamWriter(cl.getOutputStream(),"ISO-8859-1"));
                 BufferedReader br = new BufferedReader(new InputStreamReader(cl.getInputStream(),"ISO-8859-1"));
-                String catalogo=leerJSON();
-                System.out.println("Enviando catalogo a "+cl.getInetAddress()+":"+cl.getPort());
                 pw.println(catalogo);
+                pw.flush();
+                System.out.println("Catalogo Enviado a"+cl.getInetAddress()+":"+cl.getPort());
                 while(true){
                     String msj = br.readLine(); //  \n\r (10)(13)
                     if(msj.compareToIgnoreCase("salir")==0){
@@ -38,8 +41,11 @@ public class Servidor {
         } catch (Exception e) {
             // TODO: handle exception
             System.out.println("xd");
+            System.out.println(e.getMessage());
+        }
         }
     }
+
     public static String leerJSON() {
 
         try {
@@ -49,21 +55,18 @@ public class Servidor {
             String linea;
             while ((linea = reader.readLine()) != null) {
                 jsonContent.append(linea);
-                
+
             }
-            
+
             reader.close();
-            
+
             String json = jsonContent.toString();
             return json;
-
 
         } catch (Exception e) {
             // TODO: handle exception
             return e.getMessage();
         }
-
-
 
     }
 }

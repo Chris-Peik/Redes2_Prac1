@@ -31,6 +31,14 @@
       "cantidad": 80,
       "tipo": "medicamento",
       "precio": 7.25
+    },
+    {
+      "id": 5,
+      "nombre": "Jeringa 10ml",
+      "marca": "Genérico",
+      "cantidad": 2,
+      "tipo": "insumo",
+      "precio": 50
     }
   ]
 }
