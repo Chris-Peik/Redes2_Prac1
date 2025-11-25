@@ -43,6 +43,26 @@ public class Cliente {
         }
     }
 
+    public static class Carrito {
+        public static JSONArray carrito = new JSONArray();
+
+        public Carrito (){
+
+        }
+
+        public static void getCarrito(){
+
+        }
+
+        public static void addCarrito(JSONObject producto){
+
+            carrito.put(producto);
+
+
+
+        }
+    }
+
     private static Filtro flag = Filtro.Alfabético;
 
     public static void main(String[] args) throws Exception {
@@ -93,7 +113,7 @@ public class Cliente {
             case 0:
                 System.out.print("\033c");
                 System.out.flush();
-                System.out.println("███████╗ █████╗ ██████╗ ███╗   ███╗ █████╗  ██████╗██╗ █████╗ \n" +
+     System.out.println("███████╗ █████╗ ██████╗ ███╗   ███╗ █████╗  ██████╗██╗ █████╗ \n" +
                         "██╔════╝██╔══██╗██╔══██╗████╗ ████║██╔══██╗██╔════╝██║██╔══██╗\n" +
                         "█████╗  ███████║██████╔╝██╔████╔██║███████║██║     ██║███████║\n" +
                         "██╔══╝  ██╔══██║██╔══██╗██║╚██╔╝██║██╔══██║██║     ██║██╔══██║\n" +
@@ -170,8 +190,17 @@ public class Cliente {
             }
         } else {
 
+            JSONObject prod = Catalogo.actual.getJSONObject(0);
+
+            if(prod.length() != 0){
+
+                Carrito.addCarrito(prod);
+
+            }
+
         }
     }
+
 
     public static JSONArray buscar(String search, JSONArray json) {
 
@@ -224,10 +253,15 @@ public class Cliente {
 
             for (int i = 0; i < articulos.length(); i++) {
                 JSONObject articulo = articulos.getJSONObject(i);
+                int cantidad = articulo.getInt("cantidad");
+
+                if(cantidad>0){
+                //TODO Continuar
                 int numeroListado = i + 1; // Número del listado (no el ID del JSON)
                 String nombre = articulo.getString("nombre");
                 String marca = articulo.getString("marca");
-                int cantidad = articulo.getInt("cantidad");
+                
+
                 String tipo = articulo.getString("tipo");
                 double precio = articulo.getDouble("precio");
 
@@ -239,9 +273,13 @@ public class Cliente {
                 String tipoFormateado = String.format("%-12s", tipo);
                 String precioFormateado = String.format("$%-10.2f", precio);
 
-                System.out.printf("║ [%d] ║ %s ║ %s ║ %s ║ %s ║ %s ║%n",
+                
+
+                    System.out.printf("║ [%d] ║ %s ║ %s ║ %s ║ %s ║ %s ║%n",
                         numeroListado, nombreFormateado, marcaFormateada,
                         cantidadFormateada, tipoFormateado, precioFormateado);
+
+                }
             }
         } catch (Exception e) {
             System.out.println(e.getCause());
