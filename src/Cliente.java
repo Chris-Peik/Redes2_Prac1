@@ -91,6 +91,8 @@ public class Cliente {
     public static void imprScrn(int key, Filtro filtro) {
         switch (key) {
             case 0:
+                System.out.print("\033c");
+                System.out.flush();
                 System.out.println("███████╗ █████╗ ██████╗ ███╗   ███╗ █████╗  ██████╗██╗ █████╗ \n" +
                         "██╔════╝██╔══██╗██╔══██╗████╗ ████║██╔══██╗██╔════╝██║██╔══██╗\n" +
                         "█████╗  ███████║██████╔╝██╔████╔██║███████║██║     ██║███████║\n" +
@@ -108,55 +110,66 @@ public class Cliente {
     }
 
     public static void menu(String opt, JSONArray json) {
-        switch (opt) {
-            case "B":
 
-                System.out.println(
-                        "Ingresa el normbre o marca de lo que buscas:\n(Deja en blanco para mostrar todos los articulos)");
-                BufferedReader br = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));// "Windows-1250"
-                try {
-                    String search = br.readLine();
-                    Catalogo.setActual(buscar(search, json));
-                } catch (IOException e) {
-                    System.out.println(e.getMessage());
-                }
+        boolean isInt;
+        try {
+            Integer.parseInt(opt);
+            isInt = true;
+        } catch (NumberFormatException e) {
+            isInt = false;
+        }
+        if (!isInt) {
+            switch (opt) {
+                case "B":
 
-                break;
+                    System.out.println(
+                            "Ingresa el normbre o marca de lo que buscas:\n(Deja en blanco para mostrar todos los articulos)");
+                    BufferedReader br = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));// "Windows-1250"
+                    try {
+                        String search = br.readLine();
+                        Catalogo.setActual(buscar(search, json));
+                    } catch (IOException e) {
+                        System.out.println(e.getMessage());
+                    }
 
-            case "F":
+                    break;
 
-                if (flag.toString().equals("Tipo")) {
+                case "F":
 
-                    Catalogo.setActual(sortAlfa(Catalogo.getActual()));
-                    flag = Filtro.Alfabético;
+                    if (flag.toString().equals("Tipo")) {
 
-                } else {
-                    Catalogo.setActual(sortTipo(Catalogo.getActual()));
-                    flag = Filtro.Tipo;
-                }
+                        Catalogo.setActual(sortAlfa(Catalogo.getActual()));
+                        flag = Filtro.Alfabético;
 
-                break;
+                    } else {
+                        Catalogo.setActual(sortTipo(Catalogo.getActual()));
+                        flag = Filtro.Tipo;
+                    }
 
-            case "S":
+                    break;
 
-                try {
-                    System.out.println("LOL");
-                    PrintWriter pw = new PrintWriter(
-                            new OutputStreamWriter(Catalogo.cl.getOutputStream(), "ISO-8859-1"));
-                    pw.println("salir");
-                    pw.flush();
-                    pw.close();
+                case "S":
 
-                    Catalogo.cl.close();
-                } catch (Exception e) {
-                    // TODO: handle exception
-                    System.out.println(e.getMessage());
-                }
-                System.exit(0);
-                break;
+                    try {
+                        PrintWriter pw = new PrintWriter(
+                                new OutputStreamWriter(Catalogo.cl.getOutputStream(), "ISO-8859-1"));
+                        pw.println("salir");
+                        pw.flush();
+                        pw.close();
 
-            default:
-                break;
+                        Catalogo.cl.close();
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                        System.out.println(e.getMessage());
+                    }
+                    System.exit(0);
+                    break;
+
+                default:
+                    break;
+            }
+        } else {
+
         }
     }
 
