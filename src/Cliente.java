@@ -46,7 +46,7 @@ public class Cliente {
     public static class Carrito {
         public static JSONArray carrito = new JSONArray();
 
-        public Carrito (){
+        public Carrito(){
 
         }
 
@@ -58,7 +58,30 @@ public class Cliente {
 
             carrito.put(producto);
 
+        }
 
+        public static void checkCarrito(){
+
+            if(carrito.length()==0){
+                //TODO Check This
+                System.out.println("El carrito está vacio");
+                try {
+                    Thread.sleep(2000);
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+            } else{
+                imprScrn(1, null);
+                mostrarCarrito(carrito);
+                BufferedReader opt = new BufferedReader(null);
+                try {
+                    opt.readLine();
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+                
+            }
+            
 
         }
     }
@@ -109,20 +132,25 @@ public class Cliente {
     }
 
     public static void imprScrn(int key, Filtro filtro) {
-        switch (key) {
-            case 0:
-                System.out.print("\033c");
+
+        System.out.print("\033c");
                 System.out.flush();
      System.out.println("███████╗ █████╗ ██████╗ ███╗   ███╗ █████╗  ██████╗██╗ █████╗ \n" +
                         "██╔════╝██╔══██╗██╔══██╗████╗ ████║██╔══██╗██╔════╝██║██╔══██╗\n" +
                         "█████╗  ███████║██████╔╝██╔████╔██║███████║██║     ██║███████║\n" +
                         "██╔══╝  ██╔══██║██╔══██╗██║╚██╔╝██║██╔══██║██║     ██║██╔══██║\n" +
                         "██║     ██║  ██║██║  ██║██║ ╚═╝ ██║██║  ██║╚██████╗██║██║  ██║\n" +
-                        "╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝╚═╝  ╚═╝\n" +
-                        "\n[B]Buscar artículos [F] Filtrar (Actual:" + filtro.toString() + ") [S]Salir\n" +
-                        "Para seleccionar un artículo, ingrese el NÚMERO del listado");
+                        "╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝╚═╝  ╚═╝\n");
+
+        switch (key) {
+            case 0:
+                System.out.println("\n[B]Buscar artículos [F] Filtrar (Actual:" + filtro.toString() + ") [V]Ver Carrito [S]Salir\n" +
+                "Para seleccionar un artículo, ingrese el NÚMERO del listado");
 
                 break;
+
+            case 1:System.out.println("\n[B]Buscar artículos [F] Filtrar (Actual:" + filtro.toString() + ") [C]Comprar Carrito [S]Salir\n" +
+                "Para seleccionar un artículo, ingrese el NÚMERO del listado");
 
             default:
                 break;
@@ -165,6 +193,20 @@ public class Cliente {
                         Catalogo.setActual(sortTipo(Catalogo.getActual()));
                         flag = Filtro.Tipo;
                     }
+
+                    break;
+
+                case "V":
+
+                    try {
+                        
+                        Carrito.checkCarrito();
+
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                    }
+
+
 
                     break;
 
@@ -237,6 +279,55 @@ public class Cliente {
 
     }
 
+        public static void mostrarCarrito(JSONArray articulos) {
+        try {
+
+            System.out.println(
+                    "╔══════════════════════════════════════════════════════════════════════════════════════╗");
+            System.out
+                    .println("║                                CARRITO DE ARTÍCULOS                                 ║");
+            System.out
+                    .println("╠═════╦══════════════════════════════╦══════════╦══════════╦════════════╦═════════════╣");
+            System.out
+                    .println("║  #  ║          NOMBRE              ║   MARCA  ║ CANTIDAD ║    TIPO    ║   PRECIO    ║");
+            System.out
+                    .println("╠═════╬══════════════════════════════╬══════════╬══════════╬════════════╬═════════════╣");
+
+            for (int i = 0; i < articulos.length(); i++) {
+                JSONObject articulo = articulos.getJSONObject(i);
+                int cantidad = articulo.getInt("cantidad");
+
+                if(cantidad>0){
+                int numeroListado = i + 1; // Número del listado (no el ID del JSON)
+                String nombre = articulo.getString("nombre");
+                String marca = articulo.getString("marca");
+                
+
+                String tipo = articulo.getString("tipo");
+                double precio = articulo.getDouble("precio");
+
+                // Formatear para que quede alineado
+                String nombreFormateado = String.format("%-28s",
+                        nombre.length() > 28 ? nombre.substring(0, 25) + "..." : nombre);
+                String marcaFormateada = String.format("%-10s", marca);
+                String cantidadFormateada = String.format("%-10d", cantidad);
+                String tipoFormateado = String.format("%-12s", tipo);
+                String precioFormateado = String.format("$%-10.2f", precio);
+
+                
+
+                    System.out.printf("║ [%d] ║ %s ║ %s ║ %s ║ %s ║ %s ║%n",
+                        numeroListado, nombreFormateado, marcaFormateada,
+                        cantidadFormateada, tipoFormateado, precioFormateado);
+
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getCause());
+        }
+    }
+
+
     public static void mostrarListadoArticulos(JSONArray articulos) {
         try {
 
@@ -256,7 +347,6 @@ public class Cliente {
                 int cantidad = articulo.getInt("cantidad");
 
                 if(cantidad>0){
-                //TODO Continuar
                 int numeroListado = i + 1; // Número del listado (no el ID del JSON)
                 String nombre = articulo.getString("nombre");
                 String marca = articulo.getString("marca");
