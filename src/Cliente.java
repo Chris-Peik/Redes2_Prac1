@@ -46,42 +46,75 @@ public class Cliente {
     public static class Carrito {
         public static JSONArray carrito = new JSONArray();
 
-        public Carrito(){
+        public Carrito() {
 
         }
 
-        public static void getCarrito(){
+        public static JSONArray getCarrito() {
+
+            return carrito;
 
         }
 
-        public static void addCarrito(JSONObject producto){
+        public static void setCarrito(JSONArray json) {
 
-            carrito.put(producto);
+            carrito = json;
 
         }
 
-        public static void checkCarrito(){
+        public static void addCarrito(JSONObject producto, int cantidad) {
+            //TODO Arreglar que no se altere el catalogo al agregar al carrito
+            for (int i = 0; i < carrito.length(); i++) {
 
-            if(carrito.length()==0){
-                //TODO Check This
+                JSONObject prodCarrito = carrito.getJSONObject(i);
+                if (prodCarrito.getInt("id") == producto.getInt("id")) {
+                    int cantActual = prodCarrito.getInt("cantidad");
+                    if (cantActual + cantidad > producto.getInt("cantidad")) {
+                        System.err.println("No hay suficiente stock");
+                        try {
+                            Thread.sleep(2000);
+                        } catch (Exception e) {
+
+                        }
+                        return;
+                    }
+                    prodCarrito.put("cantidad", cantActual + cantidad);
+                    return;
+                }
+
+            }
+            JSONObject nuevo = producto;;
+            nuevo.put("cantidad", cantidad);
+            //producto.put("cantidad", cantidad);
+            carrito.put(nuevo);
+
+        }
+
+        public static void emptyCarrito() {
+
+            if (carrito.length() == 0) {
+                // TODO Check This
                 System.out.println("El carrito está vacio");
                 try {
                     Thread.sleep(2000);
                 } catch (Exception e) {
                     // TODO: handle exception
                 }
-            } else{
-                imprScrn(1, null);
+            } else {
+                imprScrn(1, flag);
                 mostrarCarrito(carrito);
-                BufferedReader opt = new BufferedReader(null);
+                BufferedReader buff = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));// "Windows-1250"
                 try {
-                    opt.readLine();
+                    String opt = buff.readLine();
+
+                    menuCarrito(opt);
+
                 } catch (Exception e) {
                     // TODO: handle exception
+
+                    System.out.println(e.getMessage());
                 }
-                
             }
-            
 
         }
     }
@@ -104,6 +137,7 @@ public class Cliente {
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in, "ISO-8859-1"));// "Windows-1250"
             // while(true){
             String ec = br1.readLine();
+            br1.close();
             System.out.println(ec);
             // }
             JSONObject json = new JSONObject(ec);
@@ -118,6 +152,7 @@ public class Cliente {
                 mostrarListadoArticulos(Catalogo.getActual());
                 String opt = br.readLine(); // Integer.MAX_VALUE
                 menu(opt, articulos);
+
                 // String eco2 = br1.readLine();
                 // System.out.println("Eco recibido desde " + cl.getInetAddress() + ":" +
                 // cl.getPort()
@@ -127,6 +162,7 @@ public class Cliente {
             // cl.close();
         } catch (Exception e) {
             // TODO: handle exception
+            System.out.println("xd");
             System.out.println(e.getMessage());
         }
     }
@@ -134,23 +170,25 @@ public class Cliente {
     public static void imprScrn(int key, Filtro filtro) {
 
         System.out.print("\033c");
-                System.out.flush();
-     System.out.println("███████╗ █████╗ ██████╗ ███╗   ███╗ █████╗  ██████╗██╗ █████╗ \n" +
-                        "██╔════╝██╔══██╗██╔══██╗████╗ ████║██╔══██╗██╔════╝██║██╔══██╗\n" +
-                        "█████╗  ███████║██████╔╝██╔████╔██║███████║██║     ██║███████║\n" +
-                        "██╔══╝  ██╔══██║██╔══██╗██║╚██╔╝██║██╔══██║██║     ██║██╔══██║\n" +
-                        "██║     ██║  ██║██║  ██║██║ ╚═╝ ██║██║  ██║╚██████╗██║██║  ██║\n" +
-                        "╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝╚═╝  ╚═╝\n");
+        System.out.flush();
+        System.out.println("███████╗ █████╗ ██████╗ ███╗   ███╗ █████╗  ██████╗██╗ █████╗ \n" +
+                "██╔════╝██╔══██╗██╔══██╗████╗ ████║██╔══██╗██╔════╝██║██╔══██╗\n" +
+                "█████╗  ███████║██████╔╝██╔████╔██║███████║██║     ██║███████║\n" +
+                "██╔══╝  ██╔══██║██╔══██╗██║╚██╔╝██║██╔══██║██║     ██║██╔══██║\n" +
+                "██║     ██║  ██║██║  ██║██║ ╚═╝ ██║██║  ██║╚██████╗██║██║  ██║\n" +
+                "╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝╚═╝  ╚═╝\n");
 
         switch (key) {
             case 0:
-                System.out.println("\n[B]Buscar artículos [F] Filtrar (Actual:" + filtro.toString() + ") [V]Ver Carrito [S]Salir\n" +
-                "Para seleccionar un artículo, ingrese el NÚMERO del listado");
+                System.out.println("\n[B]Buscar artículos [F] Filtrar (Actual:" + filtro.toString()
+                        + ") [V]Ver Carrito [S]Salir\n" +
+                        "Para seleccionar un artículo, ingrese el NÚMERO del listado");
 
                 break;
 
-            case 1:System.out.println("\n[B]Buscar artículos [F] Filtrar (Actual:" + filtro.toString() + ") [C]Comprar Carrito [S]Salir\n" +
-                "Para seleccionar un artículo, ingrese el NÚMERO del listado");
+            case 1:
+                System.out.println("\n[F] Filtrar (Actual:" + filtro.toString() + ") [C]Comprar Carrito [R]Regresar\n" +
+                        "Para seleccionar un artículo, ingrese el NÚMERO del listado");
 
             default:
                 break;
@@ -160,14 +198,16 @@ public class Cliente {
     public static void menu(String opt, JSONArray json) {
 
         boolean isInt;
+
         try {
             Integer.parseInt(opt);
             isInt = true;
+
         } catch (NumberFormatException e) {
             isInt = false;
         }
         if (!isInt) {
-            switch (opt) {
+            switch (opt.toUpperCase()) {
                 case "B":
 
                     System.out.println(
@@ -199,14 +239,12 @@ public class Cliente {
                 case "V":
 
                     try {
-                        
-                        Carrito.checkCarrito();
+
+                        Carrito.emptyCarrito();
 
                     } catch (Exception e) {
                         // TODO: handle exception
                     }
-
-
 
                     break;
 
@@ -232,17 +270,135 @@ public class Cliente {
             }
         } else {
 
-            JSONObject prod = Catalogo.actual.getJSONObject(0);
+            int art = Integer.parseInt(opt) - 1;
+            JSONObject prod = Catalogo.actual.getJSONObject(art);
+            int catcant = prod.getInt("cantidad");
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));// "Windows-1250"
+            int cant;
+            while (true) {
+                System.out.println("\r\033[2K¿Cuantos deseas agregar?");
 
-            if(prod.length() != 0){
+                try {
+                    String cantStr = br.readLine();
 
-                Carrito.addCarrito(prod);
+                    try {
+                        cant = Integer.parseInt(cantStr);
+                        if (cant > catcant) {
+                            System.err.println("\r\033[2KNo hay suficiente stock");
+                            try {
+                                Thread.sleep(2000);
+                            } catch (InterruptedException in) {
+                                in.printStackTrace();
+                            }
+                            continue;
+                        }
+                        break;
+                    } catch (NumberFormatException e) {
+                        System.err.println("Cantidad inválida");
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException in) {
+                            in.printStackTrace();
+                        }
+
+                    }
+
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                    return;
+                }
+            }
+            if (prod.length() != 0 && cant > 0) {
+
+                Carrito.addCarrito(prod, cant);
 
             }
 
         }
     }
 
+    public static void menuCarrito(String opt) {
+
+        Carrito.setCarrito(sortAlfa(Carrito.getCarrito()));
+        flag = Filtro.Alfabético;
+
+        boolean isInt;
+        try {
+            Integer.parseInt(opt);
+            isInt = true;
+        } catch (NumberFormatException e) {
+            isInt = false;
+        }
+        if (!isInt) {
+            switch (opt) {
+
+                case "F":
+
+                    if (flag.toString().equals("Tipo")) {
+
+                        Carrito.setCarrito(sortAlfa(Carrito.getCarrito()));
+                        flag = Filtro.Alfabético;
+
+                    } else {
+                        Carrito.setCarrito(sortTipo(Carrito.getCarrito()));
+                        flag = Filtro.Tipo;
+                    }
+
+                    break;
+
+                case "C":
+
+                    try {
+
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                    }
+
+                    break;
+
+                case "R":
+
+                    break;
+
+                default:
+                    break;
+            }
+        } else {
+
+            JSONObject prod = Carrito.getCarrito().getJSONObject(0);
+            System.out.println("¿Cuantos deseas agregar?");
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));// "Windows-1250"
+            int cant;
+            try {
+                String cantStr = br.readLine();
+
+                while (true) {
+                    try {
+                        cant = Integer.parseInt(cantStr);
+                        break;
+                    } catch (NumberFormatException e) {
+                        System.err.println("Cantidad inválida");
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException in) {
+                            in.printStackTrace();
+                        }
+
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+                return;
+            }
+
+            if (prod.length() != 0 && cant > 0) {
+
+                Carrito.addCarrito(prod, cant);
+
+            }
+
+        }
+    }
 
     public static JSONArray buscar(String search, JSONArray json) {
 
@@ -279,7 +435,7 @@ public class Cliente {
 
     }
 
-        public static void mostrarCarrito(JSONArray articulos) {
+    public static void mostrarCarrito(JSONArray articulos) {
         try {
 
             System.out.println(
@@ -297,28 +453,25 @@ public class Cliente {
                 JSONObject articulo = articulos.getJSONObject(i);
                 int cantidad = articulo.getInt("cantidad");
 
-                if(cantidad>0){
-                int numeroListado = i + 1; // Número del listado (no el ID del JSON)
-                String nombre = articulo.getString("nombre");
-                String marca = articulo.getString("marca");
-                
+                if (cantidad > 0) {
+                    int numeroListado = i + 1; // Número del listado (no el ID del JSON)
+                    String nombre = articulo.getString("nombre");
+                    String marca = articulo.getString("marca");
 
-                String tipo = articulo.getString("tipo");
-                double precio = articulo.getDouble("precio");
+                    String tipo = articulo.getString("tipo");
+                    double precio = articulo.getDouble("precio");
 
-                // Formatear para que quede alineado
-                String nombreFormateado = String.format("%-28s",
-                        nombre.length() > 28 ? nombre.substring(0, 25) + "..." : nombre);
-                String marcaFormateada = String.format("%-10s", marca);
-                String cantidadFormateada = String.format("%-10d", cantidad);
-                String tipoFormateado = String.format("%-12s", tipo);
-                String precioFormateado = String.format("$%-10.2f", precio);
-
-                
+                    // Formatear para que quede alineado
+                    String nombreFormateado = String.format("%-28s",
+                            nombre.length() > 28 ? nombre.substring(0, 25) + "..." : nombre);
+                    String marcaFormateada = String.format("%-10s", marca);
+                    String cantidadFormateada = String.format("%-10d", cantidad);
+                    String tipoFormateado = String.format("%-12s", tipo);
+                    String precioFormateado = String.format("$%-10.2f", precio);
 
                     System.out.printf("║ [%d] ║ %s ║ %s ║ %s ║ %s ║ %s ║%n",
-                        numeroListado, nombreFormateado, marcaFormateada,
-                        cantidadFormateada, tipoFormateado, precioFormateado);
+                            numeroListado, nombreFormateado, marcaFormateada,
+                            cantidadFormateada, tipoFormateado, precioFormateado);
 
                 }
             }
@@ -326,7 +479,6 @@ public class Cliente {
             System.out.println(e.getCause());
         }
     }
-
 
     public static void mostrarListadoArticulos(JSONArray articulos) {
         try {
@@ -346,28 +498,25 @@ public class Cliente {
                 JSONObject articulo = articulos.getJSONObject(i);
                 int cantidad = articulo.getInt("cantidad");
 
-                if(cantidad>0){
-                int numeroListado = i + 1; // Número del listado (no el ID del JSON)
-                String nombre = articulo.getString("nombre");
-                String marca = articulo.getString("marca");
-                
+                if (cantidad > 0) {
+                    int numeroListado = i + 1; // Número del listado (no el ID del JSON)
+                    String nombre = articulo.getString("nombre");
+                    String marca = articulo.getString("marca");
 
-                String tipo = articulo.getString("tipo");
-                double precio = articulo.getDouble("precio");
+                    String tipo = articulo.getString("tipo");
+                    double precio = articulo.getDouble("precio");
 
-                // Formatear para que quede alineado
-                String nombreFormateado = String.format("%-28s",
-                        nombre.length() > 28 ? nombre.substring(0, 25) + "..." : nombre);
-                String marcaFormateada = String.format("%-10s", marca);
-                String cantidadFormateada = String.format("%-10d", cantidad);
-                String tipoFormateado = String.format("%-12s", tipo);
-                String precioFormateado = String.format("$%-10.2f", precio);
-
-                
+                    // Formatear para que quede alineado
+                    String nombreFormateado = String.format("%-28s",
+                            nombre.length() > 28 ? nombre.substring(0, 25) + "..." : nombre);
+                    String marcaFormateada = String.format("%-10s", marca);
+                    String cantidadFormateada = String.format("%-10d", cantidad);
+                    String tipoFormateado = String.format("%-12s", tipo);
+                    String precioFormateado = String.format("$%-10.2f", precio);
 
                     System.out.printf("║ [%d] ║ %s ║ %s ║ %s ║ %s ║ %s ║%n",
-                        numeroListado, nombreFormateado, marcaFormateada,
-                        cantidadFormateada, tipoFormateado, precioFormateado);
+                            numeroListado, nombreFormateado, marcaFormateada,
+                            cantidadFormateada, tipoFormateado, precioFormateado);
 
                 }
             }
@@ -418,4 +567,16 @@ public class Cliente {
 
     }
 
+    public static void checkCarrito() {
+
+        for (int i = 0; i < Carrito.carrito.length(); i++) {
+            JSONObject articulo = Carrito.carrito.getJSONObject(i);
+            int cantidad = articulo.getInt("cantidad");
+
+            if (cantidad > 0) {
+                System.out.println("El carrito tiene artículos");
+                return;
+            }
+        }
+    }
 }
