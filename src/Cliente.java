@@ -83,10 +83,29 @@ public class Cliente {
                 }
 
             }
-            JSONObject nuevo = producto;;
+            JSONObject nuevo = new JSONObject(producto.toString());
             nuevo.put("cantidad", cantidad);
             //producto.put("cantidad", cantidad);
             carrito.put(nuevo);
+
+        }
+
+        public static void quitarCarrito(int id, int cantidad) {
+
+            for (int i = 0; i < carrito.length(); i++) {
+
+                JSONObject prodCarrito = carrito.getJSONObject(i);
+                if (prodCarrito.getInt("id") == id) {
+                    int cantActual = prodCarrito.getInt("cantidad");
+                    if (cantActual - cantidad <= 0) {
+                        carrito.remove(i);
+                        return;
+                    }
+                    prodCarrito.put("cantidad", cantActual - cantidad);
+                    return;
+                }
+
+            }
 
         }
 
@@ -364,11 +383,11 @@ public class Cliente {
                     break;
             }
         } else {
-
-            JSONObject prod = Carrito.getCarrito().getJSONObject(0);
-            System.out.println("¿Cuantos deseas agregar?");
+            JSONObject prod = Carrito.getCarrito().getJSONObject(Integer.parseInt(opt) - 1);
+            System.out.println("¿Cuantos deseas eliminar?");
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));// "Windows-1250"
             int cant;
+            int id = prod.getInt("id");
             try {
                 String cantStr = br.readLine();
 
@@ -393,7 +412,8 @@ public class Cliente {
 
             if (prod.length() != 0 && cant > 0) {
 
-                Carrito.addCarrito(prod, cant);
+                Carrito.quitarCarrito(id, cant);
+                Carrito.emptyCarrito();
 
             }
 
