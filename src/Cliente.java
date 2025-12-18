@@ -1,5 +1,10 @@
 import java.net.*;
+import java.nio.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.nio.channels.SelectionKey;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,7 +25,7 @@ public class Cliente {
 
         public static JSONArray actual;
 
-        public static Socket cl;
+        public static SocketChannel cl;
 
         public Catalogo() {
 
@@ -63,7 +68,6 @@ public class Cliente {
         }
 
         public static void addCarrito(JSONObject producto, int cantidad) {
-            //TODO Arreglar que no se altere el catalogo al agregar al carrito
             for (int i = 0; i < carrito.length(); i++) {
 
                 JSONObject prodCarrito = carrito.getJSONObject(i);
@@ -85,7 +89,7 @@ public class Cliente {
             }
             JSONObject nuevo = new JSONObject(producto.toString());
             nuevo.put("cantidad", cantidad);
-            //producto.put("cantidad", cantidad);
+            // producto.put("cantidad", cantidad);
             carrito.put(nuevo);
 
         }
@@ -146,36 +150,83 @@ public class Cliente {
             int pto = 8000;
             InetAddress host = null; // Integer.MAX_VALUE
             String dir = "127.0.0.1";
-            host = InetAddress.getByName(dir);// UnknownHostException
-            System.out.println(host);
-            Socket cli = new Socket(host, pto);
+
+            SocketChannel cli = SocketChannel.open();
+            cli.configureBlocking(false);
+
+            Selector sel = Selector.open();
+            cli.connect(new InetSocketAddress(dir, pto));
+            cli.register(sel, SelectionKey.OP_CONNECT);
+
+            while (true) {
+                sel.select();
+                Iterator<SelectionKey> it = sel.selectedKeys().iterator();
+                while (it.hasNext()) {
+                    SelectionKey k = (SelectionKey) it.next();
+                    it.remove();
+                    if (k.isConnectable()) {
+                        SocketChannel ch = (SocketChannel) k.channel();
+                        if (ch.isConnectionPending()) {
+                            try {
+                                ch.finishConnect();
+                                System.out.println("Conexion con el servidor " + dir + ":" + pto + " establecida\n");
+
+                                while (true) {
+                                    String catalogo = recibirCatalogo(ch);
+                                    if (catalogo != null) {
+                                        initCatalogo(catalogo);
+                                        System.out.println("Catalogo Cargado");
+                                        break;
+                                    }
+                                }
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } // catch
+                        } // if_conectionpending
+                        ch.configureBlocking(false);
+                        ch.register(sel, SelectionKey.OP_READ);
+                        continue;
+                    } // if
+                    if (k.isReadable()) {
+                        SocketChannel ch2 = (SocketChannel) k.channel();
+                        ByteBuffer b = ByteBuffer.allocate(2000);
+                        b.clear();
+                        int n = ch2.read(b);
+                        b.flip();
+                        String eco = new String(b.array(),0,n);
+                        System.out.println("Eco recibido: " + eco);
+                        k.interestOps(SelectionKey.OP_WRITE);
+                        b.clear();
+                        continue;
+                    } // if
+                } // while
+                break;
+            } // while
+
             Catalogo.cl = cli;
-            BufferedReader br1 = new BufferedReader(new InputStreamReader(Catalogo.cl.getInputStream(), "ISO-8859-1"));
+            // BufferedReader br1 = new BufferedReader(new
+            // InputStreamReader(Catalogo.cl.getInputStream(), "ISO-8859-1"));
 
             System.out.println("Conexion con el servidor " + dir + ":" + pto + " establecida\n");
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in, "ISO-8859-1"));// "Windows-1250"
             // while(true){
-            String ec = br1.readLine();
-            br1.close();
+            // String ec = br1.readLine();
+            String ec = "{}";
             System.out.println(ec);
             // }
-            JSONObject json = new JSONObject(ec);
-            JSONArray articulos = json.getJSONArray("articulos");
-            articulos = sortAlfa(articulos);
-            Catalogo.setOG(articulos);
-            Catalogo.setActual(articulos);
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
 
             while (true) {
 
                 imprScrn(0, flag);
                 mostrarListadoArticulos(Catalogo.getActual());
                 String opt = br.readLine(); // Integer.MAX_VALUE
-                menu(opt, articulos);
-
-                // String eco2 = br1.readLine();
-                // System.out.println("Eco recibido desde " + cl.getInetAddress() + ":" +
-                // cl.getPort()
-                // + " " + eco2);
+                menu(opt, Catalogo.getActual());
             }
 
             // cl.close();
@@ -184,6 +235,52 @@ public class Cliente {
             System.out.println("xd");
             System.out.println(e.getMessage());
         }
+    }
+
+    public static void enviarMsj(){
+
+
+    }
+
+    public static JSONArray initCatalogo(String str) {
+
+        try {
+
+            JSONObject json = new JSONObject(str);
+            JSONArray articulos = json.getJSONArray("articulos");
+            articulos = sortAlfa(articulos);
+            Catalogo.setOG(articulos);
+            Catalogo.setActual(articulos);
+            return articulos;
+
+        } catch (Exception e) {
+            System.out.println("Error Inicializando Catalogo:\n"+e.getMessage());
+            return null;
+        }
+
+    }
+
+    public static String recibirCatalogo(SocketChannel cl) {
+
+        ByteBuffer buffer = ByteBuffer.allocate(2000);
+        buffer.clear();
+
+        try {
+            int n = cl.read(buffer);
+            buffer.flip();
+            String catalogo = new String(buffer.array(), 0, n);
+            System.out.println("Catálogo recibido: " + catalogo);
+            return catalogo;
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ex) {
+                // TODO: handle exception
+            }
+        }
+        return null;
+
     }
 
     public static void imprScrn(int key, Filtro filtro) {
@@ -270,12 +367,9 @@ public class Cliente {
                 case "S":
 
                     try {
-                        PrintWriter pw = new PrintWriter(
-                                new OutputStreamWriter(Catalogo.cl.getOutputStream(), "ISO-8859-1"));
-                        pw.println("salir");
-                        pw.flush();
-                        pw.close();
-
+                        ByteBuffer buffer = ByteBuffer.wrap("SALIR".getBytes());
+                        Catalogo.cl.write(buffer);
+                        buffer.clear();
                         Catalogo.cl.close();
                     } catch (Exception e) {
                         // TODO: handle exception
@@ -349,7 +443,7 @@ public class Cliente {
             isInt = false;
         }
         if (!isInt) {
-            switch (opt) {
+            switch (opt.toUpperCase()) {
 
                 case "F":
 
@@ -367,11 +461,7 @@ public class Cliente {
 
                 case "C":
 
-                    try {
-
-                    } catch (Exception e) {
-                        // TODO: handle exception
-                    }
+                    comprarCarrito();
 
                     break;
 
@@ -419,6 +509,24 @@ public class Cliente {
 
         }
     }
+
+    public static void comprarCarrito() {
+
+        try {
+            ByteBuffer buffer = ByteBuffer.wrap(Carrito.getCarrito().toString().getBytes());
+            Catalogo.cl.write(buffer);
+            buffer.clear();
+            System.out.println("Compra realizada con exito!");
+            Carrito.carrito = new JSONArray();
+        } catch (Exception e) {
+        }
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
+
+        }
 
     public static JSONArray buscar(String search, JSONArray json) {
 
